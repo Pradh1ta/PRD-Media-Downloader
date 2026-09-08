@@ -8,10 +8,21 @@ from pathlib import Path
 import subprocess
 import yt_dlp
 
+
+sosmed = ['Tiktok', 'Youtube', 'Facebook', 'X', 'Instagram']
+clear()
 print(Fore.YELLOW + "=== PRD MEDIA DOWNLOADER ===")
 
-url = input("Paste URL: ")
-title = input("File name: ")
+print('Silahkan Masukan URL seperti : ')
+for item in sosmed:
+    print(item, end=", ")
+print()
+print()
+url = input(Fore.CYAN + "> Paste URL: " + Style.RESET_ALL)
+title = input(Fore.CYAN + "> File name: " + Style.RESET_ALL)
+print()
+time.sleep(2)
+clear()
 
 download_folder = Path.home() / "Downloads"
 
@@ -41,10 +52,11 @@ try:
             else:
                 raise
 
-    print(Fore.GREEN + "Download selesai!")
+    print()
+    print(Fore.YELLOW + "Download selesai!")
+    print(Fore.YELLOW + "Checking codec...")
     time.sleep(2)
     clear()
-    print(Fore.YELLOW + "Checking codec...")
 
     result = subprocess.run(
         [
@@ -95,10 +107,16 @@ try:
         print(f"\nConvert selesai: {converted_file.name}")
 
     else:
-        print("Codec sudah kompatibel, tidak perlu convert.")
+        final_file = file_path
+        size_mb = final_file.stat().st_size / (1024 * 1024)
+
+        print(Fore.YELLOW + "Codec sudah kompatibel, tidak perlu convert.")
         time.sleep(2)
         clear()
         print(Fore.GREEN + "Video berhasil di download !")
+        print(f'Nama File : {final_file.name}')
+        print(f"Size      : {size_mb:.2f} MB")
+        print()
 
 except yt_dlp.utils.DownloadError:
     print("Download gagal.")
