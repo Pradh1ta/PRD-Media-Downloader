@@ -1,23 +1,22 @@
-# PRD-Media-Downloader
-Media downloader for social media
+# PRD Media Downloader
 
 Simple media downloader built with Python and yt-dlp.
 
 ## Requirements
 - Python
+- Git
 - FFmpeg
 
-## Install
+## Installation
 
 ```bash
+git clone https://github.com/Pradh1ta/PRD-Media-Downloader.git
+cd PRD-Media-Downloader
 pip install -r requirements.txt
-```
-
-Install FFmpeg on Windows:
-
-```bash
 winget install Gyan.FFmpeg
 ```
+
+Restart the terminal after installing FFmpeg.
 
 ## Run
 
@@ -25,6 +24,6 @@ winget install Gyan.FFmpeg
 python main.py
 ```
 
-Paste a URL and the file will be saved to your **Downloads** folder.
+Paste a URL and the downloaded file will be saved to your **Downloads** folder.
 
 > Only download content you own or have permission to download.
