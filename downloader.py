@@ -1,46 +1,16 @@
 from pathlib import Path
+import sys
+import os
 import yt_dlp
 
 
-def download_media(
-    url,
-    save_folder,
-    quality="Best",
-    media_format="Video",
-    progress_callback=None
-):
-    save_folder = Path(save_folder)
-
-    print("FORMAT DITERIMA:", media_format)
-    print("QUALITY DITERIMA:", quality)
-
-    if quality == "1080p":
-        video_format = "bestvideo[height<=1080]+bestaudio/best[height<=1080]"
-
-    elif quality == "720p":
-        video_format = "bestvideo[height<=720]+bestaudio/best[height<=720]"
-
-    elif quality == "480p":
-        video_format = "bestvideo[height<=480]+bestaudio/best[height<=480]"
-
+def get_ffmpeg_path():
+    if getattr(sys, "frozen", False):
+        base_path = sys._MEIPASS
     else:
-        video_format = "bestvideo+bestaudio/best"
+        base_path = os.path.dirname(os.path.abspath(__file__))
 
-    def progress_hook(data):
-        if data["status"] == "downloading":
-            downloaded = data.get("downloaded_bytes", 0)
-            total = data.get("total_bytes") or data.get("total_bytes_estimate")
-
-            if total and progress_callback:
-                percent = downloaded / total
-                progress_callback(percent)
-
-        elif data["status"] == "finished":
-            if progress_callback:
-                progress_callback(1)
-
-    from pathlib import Path
-import yt_dlp
+    return os.path.join(base_path, "bin")
 
 
 def download_media(
@@ -51,6 +21,7 @@ def download_media(
     progress_callback=None
 ):
     save_folder = Path(save_folder)
+    ffmpeg_path = get_ffmpeg_path()
 
     def progress_hook(data):
         if data["status"] == "downloading":
@@ -74,6 +45,7 @@ def download_media(
             "fragment_retries": 5,
             "socket_timeout": 30,
             "progress_hooks": [progress_hook],
+            "ffmpeg_location": ffmpeg_path,
             "postprocessors": [
                 {
                     "key": "FFmpegExtractAudio",
@@ -100,6 +72,7 @@ def download_media(
             "fragment_retries": 5,
             "socket_timeout": 30,
             "progress_hooks": [progress_hook],
+            "ffmpeg_location": ffmpeg_path,
         }
 
     with yt_dlp.YoutubeDL(options) as downloader:
@@ -110,34 +83,6 @@ def download_media(
 
         return downloader.prepare_filename(info)
 
-def get_media_info(url):
-    options = {
-        "quiet": True,
-        "skip_download": True,
-    }
-
-    with yt_dlp.YoutubeDL(options) as downloader:
-        info = downloader.extract_info(
-            url,
-            download=False
-        )
-
-        return {
-            "title": info.get("title", "Unknown Title"),
-            "uploader": info.get("uploader", "Unknown"),
-            "extractor": info.get("extractor_key", "Unknown"),
-            "thumbnail": info.get("thumbnail"),
-        }
-
-    with yt_dlp.YoutubeDL(options) as downloader:
-        info = downloader.extract_info(
-            url,
-            download=True
-        )
-
-        file_path = downloader.prepare_filename(info)
-
-        return file_path
 
 def get_media_info(url):
     options = {
