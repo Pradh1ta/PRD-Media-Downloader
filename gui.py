@@ -12,7 +12,7 @@ ctk.set_appearance_mode("light")
 app = ctk.CTk()
 
 app.title("PRD Media Downloader")
-app.geometry("900x720")
+app.geometry("920x670")
 app.resizable(False, False)
 
 
@@ -20,12 +20,26 @@ app.resizable(False, False)
 # Main Container
 # =========================
 
-main_frame = ctk.CTkFrame(
+# =========================
+# Main Container
+# =========================
+
+scroll_frame = ctk.CTkScrollableFrame(
     app,
     fg_color="white",
     corner_radius=0
 )
-main_frame.pack(fill="both", expand=True)
+scroll_frame.pack(fill="both", expand=True)
+
+main_frame = ctk.CTkFrame(
+    scroll_frame,
+    width=880,
+    height=760,
+    fg_color="white",
+    corner_radius=0
+)
+main_frame.pack()
+main_frame.pack_propagate(False)
 
 
 # =========================
@@ -35,7 +49,7 @@ main_frame.pack(fill="both", expand=True)
 brand = ctk.CTkLabel(
     main_frame,
     text="PRD.",
-    font=("Arial", 24, "bold"),
+    font=("Poppins", 24, "bold"),
     text_color="#111111"
 )
 brand.place(x=50, y=35)
@@ -48,7 +62,7 @@ brand.place(x=50, y=35)
 title = ctk.CTkLabel(
     main_frame,
     text="Media Downloader",
-    font=("Arial", 32, "bold"),
+    font=("Poppins", 30, "bold"),
     text_color="#111111"
 )
 title.place(x=50, y=100)
@@ -56,7 +70,7 @@ title.place(x=50, y=100)
 subtitle = ctk.CTkLabel(
     main_frame,
     text="Download media from your favorite platforms.",
-    font=("Arial", 14),
+    font=("Poppins", 22, "bold"),
     text_color="#737373"
 )
 subtitle.place(x=50, y=145)
@@ -68,18 +82,19 @@ subtitle.place(x=50, y=145)
 
 url_entry = ctk.CTkEntry(
     main_frame,
-    width=680,
-    height=48,
+    width=760,
+    height=52,
     placeholder_text="Paste media URL...",
     fg_color="white",
     text_color="#111111",
-    placeholder_text_color="#9A9A9A",
-    border_color="#DADADA",
-    border_width=1,
-    corner_radius=8,
-    font=("Arial", 14)
+    placeholder_text_color="#000000",
+    border_color="#000000",
+    border_width=2,
+    corner_radius=26,
+    font=("Poppins", 12)
 )
-url_entry.place(x=50, y=200)
+
+url_entry.place(x=50, y=195)
 
 
 def paste_url():
@@ -95,19 +110,17 @@ def paste_url():
 
 paste_button = ctk.CTkButton(
     main_frame,
-    text="PASTE",
-    width=100,
-    height=48,
-    fg_color="white",
-    hover_color="#F2F2F2",
-    text_color="#111111",
-    border_color="#DADADA",
-    border_width=1,
-    corner_radius=8,
-    font=("Arial", 13, "bold"),
+    text="↗",
+    width=36,
+    height=36,
+    fg_color="#111111",
+    hover_color="#333333",
+    text_color="white",
+    corner_radius=100,
+    font=("Poppins", 16, "bold"),
     command=paste_url
 )
-paste_button.place(x=750, y=200)
+paste_button.place(x=825, y=203)
 
 
 
@@ -119,69 +132,203 @@ paste_button.place(x=750, y=200)
 format_label = ctk.CTkLabel(
     main_frame,
     text="FORMAT",
-    font=("Arial", 12, "bold"),
-    text_color="#737373"
+    font=("Poppins", 12, "bold"),
+    text_color="#111111"
 )
-format_label.place(x=50, y=285)
+format_label.place(x=50, y=260)
+
 
 quality_label = ctk.CTkLabel(
     main_frame,
     text="QUALITY",
-    font=("Arial", 12, "bold"),
-    text_color="#737373"
+    font=("Poppins", 12, "bold"),
+    text_color="#111111"
 )
-quality_label.place(x=460, y=285)
+quality_label.place(x=460, y=260)
+
 
 def change_format(selected_format):
+    global quality_value, quality_options
+
     if selected_format == "Video":
-        quality_menu.configure(
-            values=["Best", "1080p", "720p", "480p"]
-        )
-        quality_menu.set("Best")
+        quality_value = "Best"
+        quality_options = ["Best", "1080p", "720p", "480p"]
 
     elif selected_format == "Audio":
-        quality_menu.configure(
-            values=["320 kbps", "192 kbps", "128 kbps"]
-        )
-        quality_menu.set("320 kbps")
+        quality_value = "320 kbps"
+        quality_options = ["320 kbps", "192 kbps", "128 kbps"]
+
+    quality_button.configure(text=f"{quality_value}   ▾")
+    
+    quality_dropdown.configure(
+        height=(len(quality_options) * 39) + 10
+
         
-format_menu = ctk.CTkOptionMenu(
-    main_frame,
-    values=["Video", "Audio"],
-    width=390,
-    height=48,
-    fg_color="white",
-    button_color="white",
-    button_hover_color="#F2F2F2",
-    text_color="#111111",
-    dropdown_fg_color="white",
-    dropdown_text_color="#111111",
-    dropdown_hover_color="#F2F2F2",
-    corner_radius=8,
-    font=("Arial", 14),
-    command=change_format
 )
 
-format_menu.place(x=50, y=315)
+    for widget in quality_dropdown.winfo_children():
+        widget.destroy()
+
+    for i, value in enumerate(quality_options):
+        option = ctk.CTkButton(
+            quality_dropdown,
+            text=value,
+            width=160,
+            height=34,
+            fg_color="transparent",
+            hover_color="#2A2A2A",
+            text_color="white",
+            corner_radius=12,
+            font=("Poppins", 13),
+            anchor="w",
+            command=lambda v=value: choose_quality(v)
+        )
+
+        option.place(x=10, y=8 + (i * 39))
 
 
-quality_menu = ctk.CTkOptionMenu(
+format_value = "Video"
+
+
+def toggle_format_dropdown():
+    if format_dropdown.winfo_ismapped():
+        format_dropdown.place_forget()
+    else:
+        format_dropdown.place(x=50, y=338)
+        format_dropdown.lift()
+
+
+def choose_format(value):
+    global format_value
+
+    format_value = value
+    format_button.configure(text=f"{value}   ▾")
+    format_dropdown.place_forget()
+
+    change_format(value)
+
+
+format_button = ctk.CTkButton(
     main_frame,
-    values=["Best", "1080p", "720p", "480p"],
-    width=390,
-    height=48,
-    fg_color="white",
-    button_color="white",
-    button_hover_color="#F2F2F2",
-    text_color="#111111",
-    dropdown_fg_color="white",
-    dropdown_text_color="#111111",
-    dropdown_hover_color="#F2F2F2",
-    corner_radius=8,
-    font=("Arial", 14)
+    text="Video   ▾",
+    width=100,
+    height=42,
+    fg_color="#111111",
+    hover_color="#2A2A2A",
+    text_color="white",
+    corner_radius=21,
+    font=("Poppins", 13, "bold"),
+    anchor="w",
+    command=toggle_format_dropdown
 )
-quality_menu.place(x=460, y=315)
 
+format_button.place(x=50, y=290)
+
+
+format_dropdown = ctk.CTkFrame(
+    main_frame,
+    width=180,
+    height=88,
+    fg_color="#111111",
+    corner_radius=16
+)
+
+
+video_option = ctk.CTkButton(
+    format_dropdown,
+    text="Video",
+    width=160,
+    height=34,
+    fg_color="transparent",
+    hover_color="#2A2A2A",
+    text_color="white",
+    corner_radius=12,
+    font=("Poppins", 13),
+    anchor="w",
+    command=lambda: choose_format("Video")
+)
+video_option.place(x=10, y=8)
+
+
+audio_option = ctk.CTkButton(
+    format_dropdown,
+    text="Audio",
+    width=160,
+    height=34,
+    fg_color="transparent",
+    hover_color="#2A2A2A",
+    text_color="white",
+    corner_radius=12,
+    font=("Poppins", 13),
+    anchor="w",
+    command=lambda: choose_format("Audio")
+)
+audio_option.place(x=10, y=47)
+
+
+quality_value = "Best"
+
+
+def toggle_quality_dropdown():
+    if quality_dropdown.winfo_ismapped():
+        quality_dropdown.place_forget()
+    else:
+        quality_dropdown.place(x=460, y=338)
+        quality_dropdown.lift()
+
+
+def choose_quality(value):
+    global quality_value
+
+    quality_value = value
+    quality_button.configure(text=f"{value}   ▾")
+    quality_dropdown.place_forget()
+
+
+quality_button = ctk.CTkButton(
+    main_frame,
+    text="Best   ▾",
+    width=100,
+    height=42,
+    fg_color="#111111",
+    hover_color="#2A2A2A",
+    text_color="white",
+    corner_radius=21,
+    font=("Poppins", 13, "bold"),
+    anchor="w",
+    command=toggle_quality_dropdown
+)
+
+quality_button.place(x=460, y=290)
+
+
+quality_dropdown = ctk.CTkFrame(
+    main_frame,
+    width=180,
+    height=166,
+    fg_color="#111111",
+    corner_radius=16
+)
+
+
+quality_options = ["Best", "1080p", "720p", "480p"]
+
+for i, value in enumerate(quality_options):
+    option = ctk.CTkButton(
+        quality_dropdown,
+        text=value,
+        width=160,
+        height=34,
+        fg_color="transparent",
+        hover_color="#2A2A2A",
+        text_color="white",
+        corner_radius=12,
+        font=("Poppins", 13),
+        anchor="w",
+        command=lambda v=value: choose_quality(v)
+    )
+
+    option.place(x=10, y=8 + (i * 39))
 
 # =========================
 # Save Location
@@ -190,24 +337,24 @@ quality_menu.place(x=460, y=315)
 save_label = ctk.CTkLabel(
     main_frame,
     text="SAVE TO",
-    font=("Arial", 12, "bold"),
+    font=("Poppins", 12, "bold"),
     text_color="#737373"
 )
-save_label.place(x=50, y=395)
+save_label.place(x=50, y=350)
 
 
 save_entry = ctk.CTkEntry(
     main_frame,
-    width=680,
+    width=760,
     height=48,
     fg_color="white",
     text_color="#111111",
-    border_color="#DADADA",
-    border_width=1,
-    corner_radius=8,
-    font=("Arial", 14)
+    border_color="#000000",
+    border_width=2,
+    corner_radius=26,
+    font=("Poppins", 14)
 )
-save_entry.place(x=50, y=425)
+save_entry.place(x=50, y=380)
 
 
 def browse_folder():
@@ -220,19 +367,18 @@ def browse_folder():
 
 browse_button = ctk.CTkButton(
     main_frame,
-    text="BROWSE",
-    width=100,
-    height=48,
-    fg_color="white",
-    hover_color="#F2F2F2",
-    text_color="#111111",
-    border_color="#DADADA",
-    border_width=1,
-    corner_radius=8,
-    font=("Arial", 13, "bold"),
+    text="↗",
+    width=36,
+    height=36,
+    fg_color="#111111",
+    hover_color="#333333",
+    text_color="white",
+    corner_radius=100,
+    font=("Poppins", 16, "bold"),
     command=browse_folder
 )
-browse_button.place(x=750, y=425)
+
+browse_button.place(x=825, y=387)
 
 
 # =========================
@@ -292,10 +438,14 @@ def show_preview(info, thumbnail_data):
         except Exception as error:
             print("Thumbnail gagal:", error)
 
+    global is_preview_loading
+
+    is_preview_loading = False
+
     preview_button.configure(
-        text="PREVIEW",
+        text="↗",
         state="normal"
-    )
+)
 
 
 def preview_failed(error):
@@ -305,6 +455,24 @@ def preview_failed(error):
         text="PREVIEW",
         state="normal"
     )
+spinner_frames = ["◐", "◓", "◑", "◒"]
+spinner_index = 0
+is_preview_loading = False
+
+
+def animate_preview_spinner():
+    global spinner_index
+
+    if not is_preview_loading:
+        return
+
+    preview_button.configure(
+        text=spinner_frames[spinner_index]
+    )
+
+    spinner_index = (spinner_index + 1) % len(spinner_frames)
+
+    app.after(100, animate_preview_spinner)
 
 def fetch_info():
     url = url_entry.get()
@@ -313,10 +481,15 @@ def fetch_info():
         print("URL kosong")
         return
 
+    global is_preview_loading
+
+    is_preview_loading = True
+
     preview_button.configure(
-        text="LOADING...",
         state="disabled"
-    )
+)
+
+    animate_preview_spinner()
 
     thread = threading.Thread(
         target=run_fetch_info,
@@ -328,23 +501,23 @@ def fetch_info():
 
 preview_button = ctk.CTkButton(
     main_frame,
-    text="PREVIEW",
-    width=100,
+    text="↗",
+    width=36,
     height=36,
     fg_color="#111111",
-    hover_color="#2A2A2A",
+    hover_color="#333333",
     text_color="white",
-    corner_radius=8,
-    font=("Arial", 12, "bold"),
+    corner_radius=100,
+    font=("Poppins", 16, "bold"),
     command=fetch_info
 )
 
-preview_button.place(x=750, y=255)
+preview_button.place(x=825, y=203)
 
 preview_title = ctk.CTkLabel(
     main_frame,
     text="",
-    font=("Arial", 14, "bold"),
+    font=("Poppins", 14, "bold"),
     text_color="#111111"
 )
 preview_title.place(x=50, y=620)
@@ -353,16 +526,18 @@ preview_title.place(x=50, y=620)
 preview_meta = ctk.CTkLabel(
     main_frame,
     text="",
-    font=("Arial", 12),
+    font=("Poppind", 12),
     text_color="#737373"
 )
 preview_meta.place(x=50, y=645)
 
 def download_finished():
     download_button.configure(
-        text="DOWNLOAD COMPLETE",
+        text="COMPLETE",
+        fg_color="#22C55E",
+        hover_color="#16A34A",
         state="normal"
-    )
+)
 
     progress_bar.set(1)
     progress_label.configure(text="100%")
@@ -413,8 +588,8 @@ def run_download(url, save_folder, quality, media_format):
 def start_download():
     url = url_entry.get()
     save_folder = save_entry.get()
-    quality = quality_menu.get()
-    media_format = format_menu.get()
+    quality = quality_value
+    media_format = format_value
 
     if not url:
         print("URL kosong")
@@ -425,9 +600,11 @@ def start_download():
         return
 
     download_button.configure(
-        text="DOWNLOADING...",
+        text="DOWNLOADING",
+        fg_color="#111111",
+        hover_color="#2A2A2A",
         state="disabled"
-    )
+)
 
     progress_bar.set(0)
     progress_label.configure(text="0%")
@@ -447,18 +624,18 @@ def start_download():
 
 download_button = ctk.CTkButton(
     main_frame,
-    text="DOWNLOAD",
-    width=800,
-    height=52,
+    text="Download",
+    width=155,
+    height=48,
     fg_color="#111111",
     hover_color="#2A2A2A",
     text_color="white",
-    corner_radius=8,
-    font=("Arial", 14, "bold"),
+    corner_radius=24,
+    font=("Poppins", 14, "bold"),
     command=start_download
 )
-download_button.place(x=50, y=510)
 
+download_button.place(x=715, y=460)
 
 # =========================
 # Progress Bar
@@ -466,23 +643,23 @@ download_button.place(x=50, y=510)
 
 progress_bar = ctk.CTkProgressBar(
     main_frame,
-    width=800,
+    width=620,
     height=10,
     corner_radius=5,
     fg_color="#EAEAEA",
     progress_color="#111111"
 )
-progress_bar.place(x=50, y=585)
+progress_bar.place(x=50, y=480)
 progress_bar.set(0)
 
 
 progress_label = ctk.CTkLabel(
     main_frame,
     text="0%",
-    font=("Arial", 12),
+    font=("Poppins", 12),
     text_color="#737373"
 )
-progress_label.place(x=815, y=605)
+progress_label.place(x=50, y=500)
 
 # =========================
 # Media Preview
@@ -493,27 +670,27 @@ thumbnail_label = ctk.CTkLabel(
     width=120,
     height=68
 )
-thumbnail_label.place(x=50, y=625)
+thumbnail_label.place(x=50, y=570)
 
 preview_title = ctk.CTkLabel(
     main_frame,
     text="",
-    font=("Arial", 14, "bold"),
+    font=("Poppins", 14, "bold"),
     text_color="#111111",
     anchor="w",
     width=700
 )
-preview_title.place(x=190, y=625)
+preview_title.place(x=190, y=570)
 
 preview_meta = ctk.CTkLabel(
     main_frame,
     text="",
-    font=("Arial", 12),
+    font=("Poppins", 12),
     text_color="#737373",
     anchor="w",
     width=700
 )
-preview_meta.place(x=190, y=655)
+preview_meta.place(x=190, y=600)
 
 # =========================
 # Start App
