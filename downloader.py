@@ -127,7 +127,7 @@ def download_media(
                 "-c:a", "aac",
                 "-movflags", "+faststart",
                 temp_file
-            ], check=True)
+            ], check=True, creationflags=subprocess.CREATE_NO_WINDOW)
 
             os.replace(temp_file, final_file)
 
