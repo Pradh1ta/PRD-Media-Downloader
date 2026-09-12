@@ -5,6 +5,7 @@ import threading
 from PIL import Image
 from io import BytesIO
 from urllib.request import urlopen
+from pathlib import Path
 
 
 ctk.set_appearance_mode("light")
@@ -61,13 +62,37 @@ background_label.place(x=400, y=20)
 # Branding
 # =========================
 
+brand_logo_raw = Image.open("assets/logos/pradh.png").convert("RGBA")
+
+pixels = brand_logo_raw.load()
+
+for y in range(brand_logo_raw.height):
+    for x in range(brand_logo_raw.width):
+        r, g, b, a = pixels[x, y]
+
+        if a > 0:
+            pixels[x, y] = (0, 0, 0, a)
+
+brand_logo_img = ctk.CTkImage(
+    light_image=brand_logo_raw,
+    size=(30, 30)
+)
+
+brand_logo = ctk.CTkLabel(
+    main_frame,
+    image=brand_logo_img,
+    text=""
+)
+brand_logo.place(x=50, y=35)
+
+
 brand = ctk.CTkLabel(
     main_frame,
-    text="Instagram:  Pradh1ta",
-    font=("Space Grotesk", 15, "bold"),
+    text="    PRD Media Downloader by Pradhita",
+    font=("Space Grotesk", 12,),
     text_color="#111111"
 )
-brand.place(x=50, y=35)
+brand.place(x=78, y=35)
 
 
 # =========================
@@ -130,6 +155,29 @@ url_entry = ctk.CTkEntry(
 
 url_entry.place(x=50, y=195 + CONTENT_Y)
 
+def reset_download_state(event=None):
+    download_button.configure(
+        text="Download",
+        state="normal",
+        fg_color="#111111",
+        text_color="white"
+    )
+
+    progress_bar.set(0)
+    progress_label.configure(text="0%")
+    error_label.configure(text="")
+
+    url = url_entry.get().lower()
+
+    is_youtube = "youtube.com" in url or "youtu.be" in url
+
+    if format_value == "Video":
+        if url and not is_youtube:
+            choose_quality("Best")
+            quality_button.configure(state="disabled")
+        else:
+            quality_button.configure(state="normal")
+
 
 # =========================
 # Format & Quality
@@ -161,8 +209,8 @@ def change_format(selected_format):
         quality_options = ["Best", "1080p", "720p", "480p"]
 
     elif selected_format == "Audio":
-        quality_value = "320 kbps"
-        quality_options = ["320 kbps", "192 kbps", "128 kbps"]
+        quality_value = "Best"
+        quality_options = ["Best", "192 kbps", "128 kbps"]
 
     quality_button.configure(text=f"{quality_value}   ▾")
     
@@ -183,7 +231,7 @@ def change_format(selected_format):
             height=34,
             fg_color="transparent",
             hover_color="#2A2A2A",
-            text_color="white",
+            text_color="black",
             corner_radius=12,
             font=("Space Grotesk", 13),
             anchor="w",
@@ -299,6 +347,7 @@ quality_button = ctk.CTkButton(
     fg_color="#B8F95B",
     hover_color="#9CF520",
     text_color="black",
+    text_color_disabled="white",
     corner_radius=21,
     font=("Space Grotesk", 13, "bold"),
     anchor="w",
@@ -361,6 +410,8 @@ save_entry = ctk.CTkEntry(
     font=("Space Grotesk", 14)
 )
 save_entry.place(x=50, y=380 + CONTENT_Y)
+default_download_folder = Path.home() / "Downloads"
+save_entry.insert(0, str(default_download_folder))
 
 
 def browse_folder():
@@ -418,10 +469,18 @@ def show_preview(info, thumbnail_data):
     preview_title.configure(
         text=info["title"]
     )
+    
+    extractor = info["extractor"].lower()
 
-    preview_meta.configure(
-        text=f'{info["uploader"]} • {info["extractor"]}'
-    )
+    if "youtube" in extractor:
+        quality_button.configure(state="normal")
+    else:
+        choose_quality("Best")
+        quality_button.configure(state="disabled")
+
+        preview_meta.configure(
+            text=f'{info["uploader"]} • {info["extractor"]}'
+        )
 
     if thumbnail_data:
         try:
@@ -545,6 +604,7 @@ def download_finished():
         hover_color="#9CF520",
         state="normal"
 )
+    url_entry.configure(state="normal")
 
     progress_bar.set(1)
     progress_label.configure(text="100%")
@@ -554,42 +614,88 @@ def download_finished():
 
 def download_failed(error):
     download_button.configure(
-        text="DOWNLOAD",
+        text="FAILED",
+        fg_color="#111111",
+        hover_color="#2A2A2A",
+        text_color="white",
         state="normal"
     )
+
+    url_entry.configure(state="normal")
 
     progress_bar.set(0)
     progress_label.configure(text="0%")
 
+    error_text = str(error).lower()
+
+    if (
+        "getaddrinfo failed" in error_text
+        or "failed to resolve" in error_text
+        or "network" in error_text
+        or "timed out" in error_text
+        or "connection" in error_text
+    ):
+        message = "Network error. Check your internet connection."
+
+    elif (
+        "unsupported url" in error_text
+        or "invalid url" in error_text
+        or "not a valid url" in error_text
+        or "no suitable extractor" in error_text
+    ):
+        message = "Invalid or unsupported link."
+
+    else:
+        message = "Download failed. Please try again."
+
+    error_label.configure(text=message)
+
     print("Error:", error)
 
 def update_progress(value):
+    if value > 0:
+        download_button.configure(text="DOWNLOADING")
+
     progress_bar.set(value)
 
     percent = int(value * 100)
     progress_label.configure(text=f"{percent}%")
         
 def run_download(url, save_folder, quality, media_format):
-    try:
-        download_media(
-        url=url,
-        save_folder=save_folder,
-        quality=quality,
-        media_format=media_format,
-        progress_callback=lambda value: app.after(
-            0,
-            update_progress,
-            value
-        )
-)
+    max_attempts = 3
 
-        app.after(0, download_finished)
+    for attempt in range(1, max_attempts + 1):
+        try:
+            download_media(
+                url=url,
+                save_folder=save_folder,
+                quality=quality,
+                media_format=media_format,
+                progress_callback=lambda value: app.after(
+                    0,
+                    update_progress,
+                    value
+                )
+            )
 
-    except Exception as error:
-        app.after(
-            0,
-            lambda: download_failed(error)
-        )
+            app.after(0, download_finished)
+            return
+
+        except Exception as error:
+            print(f"Percobaan {attempt} gagal:", error)
+
+            if attempt == max_attempts:
+                app.after(
+                    0,
+                    lambda e=error: download_failed(e)
+                )
+            else:
+                app.after(
+                    0,
+                    lambda a=attempt: download_button.configure(
+                        text=f"RETRYING {a}/3..."
+                    )
+                )
 
 
 def start_download():
@@ -607,11 +713,12 @@ def start_download():
         return
 
     download_button.configure(
-        text="DOWNLOADING",
+        text="PROCESSING",
         fg_color="#111111",
         hover_color="#2A2A2A",
         state="disabled"
 )
+    url_entry.configure(state="disabled")
 
     progress_bar.set(0)
     progress_label.configure(text="0%")
@@ -667,6 +774,18 @@ progress_label = ctk.CTkLabel(
     text_color="#737373"
 )
 progress_label.place(x=50, y=500 + CONTENT_Y)
+
+error_label = ctk.CTkLabel(
+    main_frame,
+    text="",
+    font=("Space Grotesk", 12),
+    text_color="#D92D20",
+    anchor="w"
+)
+
+error_label.place(x=100, y=500 + CONTENT_Y)
+
+url_entry.bind("<KeyRelease>", reset_download_state)
 
 # =========================
 # Media Preview
