@@ -6,7 +6,16 @@ from PIL import Image
 from io import BytesIO
 from urllib.request import urlopen
 from pathlib import Path
+import sys
+import os
 
+def resource_path(relative_path):
+    if getattr(sys, "frozen", False):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+
+    return os.path.join(base_path, relative_path)
 
 ctk.set_appearance_mode("light")
 
@@ -42,7 +51,7 @@ main_frame = ctk.CTkFrame(
 main_frame.pack()
 main_frame.pack_propagate(False)
 
-img = Image.open("assets/images/background.png")
+img = Image.open(resource_path("assets/images/background.png"))
 
 background_image = ctk.CTkImage(
     light_image=img,
@@ -62,7 +71,7 @@ background_label.place(x=400, y=20)
 # Branding
 # =========================
 
-brand_logo_raw = Image.open("assets/logos/pradh.png").convert("RGBA")
+brand_logo_raw = Image.open(resource_path("assets/logos/pradh.png")).convert("RGBA")
 
 pixels = brand_logo_raw.load()
 
@@ -822,7 +831,7 @@ preview_meta.place(x=190, y=600 + CONTENT_Y)
 # Start App
 # =========================
 
-yt_raw = Image.open("assets/logos/yt.png").convert("LA").convert("RGBA")
+yt_raw = Image.open(resource_path("assets/logos/yt.png")).convert("LA").convert("RGBA")
 
 youtube_img = ctk.CTkImage(
     light_image=yt_raw,
@@ -837,7 +846,7 @@ youtube_logo = ctk.CTkLabel(
 )
 
 youtube_logo.place(x=50, y=350)
-tt_raw = Image.open("assets/logos/tt.png").convert("LA").convert("RGBA")
+tt_raw = Image.open(resource_path("assets/logos/tt.png")).convert("LA").convert("RGBA")
 tt_img = ctk.CTkImage(
     light_image=tt_raw,
     size=(32, int(32 * tt_raw.height / tt_raw.width))
@@ -846,7 +855,7 @@ tt_logo = ctk.CTkLabel(main_frame, image=tt_img, text="", fg_color="transparent"
 tt_logo.place(x=110, y=350)
 
 
-ig_raw = Image.open("assets/logos/ig.png").convert("LA").convert("RGBA")
+ig_raw = Image.open(resource_path("assets/logos/ig.png")).convert("LA").convert("RGBA")
 ig_img = ctk.CTkImage(
     light_image=ig_raw,
     size=(32, int(32 * ig_raw.height / ig_raw.width))
@@ -855,7 +864,7 @@ ig_logo = ctk.CTkLabel(main_frame, image=ig_img, text="", fg_color="transparent"
 ig_logo.place(x=170, y=350)
 
 
-x_raw = Image.open("assets/logos/x.png").convert("LA").convert("RGBA")
+x_raw = Image.open(resource_path("assets/logos/x.png")).convert("LA").convert("RGBA")
 x_img = ctk.CTkImage(
     light_image=x_raw,
     size=(32, int(32 * x_raw.height / x_raw.width))
@@ -864,7 +873,7 @@ x_logo = ctk.CTkLabel(main_frame, image=x_img, text="", fg_color="transparent")
 x_logo.place(x=230, y=350)
 
 
-fb_raw = Image.open("assets/logos/fb.png").convert("LA").convert("RGBA")
+fb_raw = Image.open(resource_path("assets/logos/fb.png")).convert("LA").convert("RGBA")
 fb_img = ctk.CTkImage(
     light_image=fb_raw,
     size=(32, int(32 * fb_raw.height / fb_raw.width))
