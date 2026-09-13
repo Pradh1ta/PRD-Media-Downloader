@@ -6,3 +6,5 @@ bin/
 build/
 dist/
 *.spec
+
+dev.py
