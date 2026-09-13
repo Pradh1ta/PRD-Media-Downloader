@@ -1105,8 +1105,8 @@ second_card = ctk.CTkFrame(
 )
 
 download_icon_image = ctk.CTkImage(
-    light_image=Image.open("assets/images/downloads.png"),
-    dark_image=Image.open("assets/images/downloads.png"),
+    light_image=Image.open(resource_path("assets/images/downloads.png")),
+    dark_image=Image.open(resource_path("assets/images/downloads.png")),
     size=(120, 120)
 )
 
