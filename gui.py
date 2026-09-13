@@ -34,11 +34,11 @@ else:
     base_path = Path(__file__).resolve().parent
 
 register_font(
-    base_path / "assets" / "fonts" / "SpaceGrotesk-Regular.ttf"
+    base_path / "assets" / "fonts" / "space-grotesk.regular.ttf"
 )
 
 register_font(
-    base_path / "assets" / "fonts" / "SpaceGrotesk-Bold.ttf"
+    base_path / "assets" / "fonts" / "space-grotesk.bold.ttf"
 )
 
 ctk.set_appearance_mode("light")
@@ -878,7 +878,7 @@ preview_title.place(x=50, y=620 + CONTENT_Y)
 preview_meta = ctk.CTkLabel(
     main_frame,
     text="",
-    font=("Poppin", 12),
+    font=("Space Grotesk", 12),
     text_color="#737373"
 )
 preview_meta.place(x=50, y=645 + CONTENT_Y)
