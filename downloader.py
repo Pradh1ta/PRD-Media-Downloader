@@ -6,6 +6,9 @@ import subprocess
 _cached_url = None
 _cached_info = None
 
+class DownloadCancelled(Exception):
+    pass
+
 
 def get_ffmpeg_path():
     if getattr(sys, "frozen", False):
@@ -22,7 +25,8 @@ def download_media(
     quality="Best",
     media_format="Video",
     custom_name="",
-    progress_callback=None
+    progress_callback=None,
+    cancel_event=None
 ):
     save_folder = Path(save_folder)
 
@@ -46,6 +50,9 @@ def download_media(
         cached_info = _cached_info
 
     def progress_hook(data):
+        if cancel_event and cancel_event.is_set():
+            raise DownloadCancelled("Download cancelled by user")
+
         if data["status"] == "downloading":
             downloaded = data.get("downloaded_bytes", 0)
             total = data.get("total_bytes") or data.get("total_bytes_estimate")

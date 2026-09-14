@@ -11,6 +11,11 @@ import os
 import webbrowser
 import ctypes
 
+cancel_event = threading.Event()
+
+myappid = "pradh.prdmediadownloader.1.3"
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
 def resource_path(relative_path):
     if getattr(sys, "frozen", False):
         base_path = sys._MEIPASS
@@ -44,6 +49,8 @@ register_font(
 ctk.set_appearance_mode("light")
 
 app = ctk.CTk()
+
+app.iconbitmap(resource_path("assets/icons/iconprd.ico"))
 
 app.title("PRD Media Downloader")
 app.geometry("920x670")
@@ -90,7 +97,7 @@ def open_changelog():
 
     title = ctk.CTkLabel(
         card,
-        text="v1.3.0 Beta",
+        text="v1.3.0",
         font=("Space Grotesk", 22, "bold"),
         text_color="#111111",
         anchor="w"
@@ -108,12 +115,12 @@ def open_changelog():
     changes = ctk.CTkLabel(
         card,
         text=(
-            "• Redesigned user interface\n"
-            "• Automatic media preview\n"
-            "• Preview metadata caching\n"
-            "• Improved download reliability\n"
-            "• Better error handling\n"
-            "• UI and performance improvements"
+            "• Added Cancel Download support\n"
+            "• Added custom application icon\n"
+            "• Updated application visuals and branding\n"
+            "• Improved bundled font loading\n"
+            "• Added quality availability notice\n"
+            "• Improved download cancellation handling"
         ),
         font=("Space Grotesk", 13),
         text_color="#333333",
@@ -169,7 +176,7 @@ def open_about():
 
     version = ctk.CTkLabel(
         card,
-        text="v1.3.0 Beta",
+        text="v1.3.0",
         font=("Space Grotesk", 12),
         text_color="#737373"
     )
@@ -229,7 +236,7 @@ main_frame = ctk.CTkFrame(
 main_frame.pack()
 main_frame.pack_propagate(False)
 
-img = Image.open(resource_path("assets/images/background.png"))
+img = Image.open(resource_path("assets/images/newbackground.png"))
 
 background_image = ctk.CTkImage(
     light_image=img,
@@ -247,7 +254,7 @@ background_label.place(x=400, y=40)
 # Branding
 # =========================
 
-brand_logo_raw = Image.open(resource_path("assets/logos/pradh.png")).convert("RGBA")
+brand_logo_raw = Image.open(resource_path("assets/logos/github-logo.png")).convert("RGBA")
 
 pixels = brand_logo_raw.load()
 
@@ -273,12 +280,13 @@ brand_logo.place(x=50, y=35)
 
 brand = ctk.CTkLabel(
     main_frame,
-    text="   Pradh",
+    text="Pradh1ta",
     font=("Space Grotesk", 20, "bold"),
+    fg_color="transparent",
     text_color="#212121"
     
 )
-brand.place(x=78, y=35)
+brand.place(x=90, y=35)
 
 about_button = ctk.CTkButton(
     main_frame,
@@ -404,8 +412,14 @@ def reset_download_state(event=None):
         if url and not is_youtube:
             choose_quality("Best")
             quality_button.configure(state="disabled")
+
+            quality_info_label.place(
+                x=170,
+                y=340 + CONTENT_Y
+            )
         else:
             quality_button.configure(state="normal")
+            quality_info_label.place_forget()
 
 # =========================
 # Format & Quality
@@ -477,6 +491,8 @@ def change_format(selected_format):
         )
 
         option.place(x=10, y=8 + (i * 39))
+
+    
 
 
 format_value = "Video"
@@ -599,6 +615,13 @@ quality_button = ctk.CTkButton(
 
 quality_button.place(x=170, y=290 + CONTENT_Y)
 
+quality_info_label = ctk.CTkLabel(
+    main_frame,
+    text="Quality selection is only available for YouTube",
+    font=("Space Grotesk", 10),
+    text_color="#737373"
+)
+
 custom_name_label = ctk.CTkLabel(
     main_frame,
     text="File Name",
@@ -707,6 +730,7 @@ browse_button.place(x=825, y=387 + CONTENT_Y)
 # =========================
 # Download Functions
 # =========================
+
 def run_fetch_info(url):
     try:
         info = get_media_info(url)
@@ -943,7 +967,7 @@ def download_failed(error):
 
 def update_progress(value):
     if value > 0:
-        download_button.configure(text="DOWNLOADING")
+        download_button.configure(text="Cancel")
 
     progress_bar.set(value)
 
@@ -953,39 +977,100 @@ def update_progress(value):
 def run_download(url, save_folder, quality, media_format, custom_name):
     max_attempts = 3
 
-    for attempt in range(1, max_attempts + 1):
-        try:
-            download_media(
-                url=url,
-                save_folder=save_folder,
-                quality=quality,
-                media_format=media_format,
-                custom_name=custom_name,
-                progress_callback=lambda value: app.after(
-                    0,
-                    update_progress,
-                    value
+    cancel_event.clear()
+
+    app.after(
+        0,
+        lambda: download_button.configure(
+            text="Cancel",
+            text_color="#EAEAEA",
+            command=cancel_download,
+            state="normal"
+        )
+    )
+
+    try:
+        for attempt in range(1, max_attempts + 1):
+            try:
+                download_media(
+                    url=url,
+                    save_folder=save_folder,
+                    quality=quality,
+                    media_format=media_format,
+                    custom_name=custom_name,
+                    progress_callback=lambda value: app.after(
+                        0,
+                        update_progress,
+                        value
+                    ),
+                    cancel_event=cancel_event
                 )
-            )
 
-            app.after(0, download_finished)
-            return
+                app.after(0, download_finished)
+                return
 
-        except Exception as error:
-            print(f"Percobaan {attempt} gagal:", error)
+            except Exception as error:
+                if cancel_event.is_set():
+                    print("Download dibatalkan")
 
-            if attempt == max_attempts:
-                app.after(
-                    0,
-                    lambda e=error: download_failed(e)
-                )
-            else:
-                app.after(
-                    0,
-                    lambda a=attempt: download_button.configure(
-                        text=f"RETRYING {a}/3..."
+                    for part_file in Path(save_folder).glob("*.part"):
+                        try:
+                            part_file.unlink()
+                        except:
+                            pass
+
+                    app.after(0, lambda: progress_bar.set(0))
+                    app.after(
+                        0,
+                        lambda: progress_label.configure(text="0%")
                     )
-                )
+
+                    return
+
+                print(f"Percobaan {attempt} gagal:", error)
+
+                if attempt == max_attempts:
+                    app.after(
+                        0,
+                        lambda e=error: download_failed(e)
+                    )
+                else:
+                    app.after(
+                        0,
+                        lambda a=attempt: download_button.configure(
+                            text=f"RETRYING {a}/3..."
+                        )
+                    )
+
+    finally:
+        app.after(
+            0,
+            lambda: download_button.configure(
+                text="Download ↗",
+                command=start_download,
+                state="normal"
+            )
+        )
+
+        app.after(
+            0,
+            lambda: url_entry.configure(
+                state="normal"
+            )
+        )
+
+        app.after(
+        0,
+        lambda: progress_bar.set(0)
+        )
+
+        app.after(
+            0,
+            lambda: progress_label.configure(
+                text="0%"
+            )
+        )
+                
 
 
 def start_download():
@@ -1021,6 +1106,13 @@ def start_download():
     )
 
     thread.start()
+
+def cancel_download():
+    cancel_event.set()
+    download_button.configure(
+        text="Cancelling..",
+        state="disabled"
+    )
 
 
 # =========================
@@ -1250,18 +1342,19 @@ fb_logo.place(x=290, y=350)
 
 beta_label = ctk.CTkLabel(
     main_frame,
-    text="Beta Version",
+    text="What's Next?",
     font=("Space Grotesk", 13, "bold"),
     text_color="#111111",
     fg_color="#B8F95B",
     corner_radius=4
 )
+
 beta_label.place(x=50, y=140 + CONTENT_Y)
 
 
 beta_text = ctk.CTkLabel(
     main_frame,
-    text="This app is still in development. Some features may change or behave unexpectedly.",
+    text="New tools are coming to PRD Media Downloader. Stay tuned.",
     font=("Space Grotesk", 10),
     text_color="#555555",
     anchor="w"
